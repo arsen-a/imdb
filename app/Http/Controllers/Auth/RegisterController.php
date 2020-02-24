@@ -61,12 +61,14 @@ class RegisterController extends Controller
      * @param  array  $data
      * @return \App\User
      */
-    protected function create()
+    protected function create($request)
     {
+        $this->validator($request->only('name', 'email', 'password'));
+
         return User::create([
-            'name' => request('name'),
-            'email' => request('email'),
-            'password' => Hash::make(request('password')),
+            'name' => $request('name'),
+            'email' => $request('email'),
+            'password' => Hash::make($request('password')),
         ]);
     }
 }
