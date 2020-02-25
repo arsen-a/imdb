@@ -20,7 +20,7 @@ class MovieController extends Controller
      */
     public function index()
     {
-        return Movie::all();
+        return Movie::paginate(10);
     }
 
     /**
