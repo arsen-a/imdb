@@ -42,7 +42,7 @@ class MovieController extends Controller
      */
     public function show($id)
     {
-        //
+        return Movie::where('id', $id)->with('genre')->first();
     }
 
     /**
