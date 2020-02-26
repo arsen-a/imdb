@@ -18,8 +18,12 @@ class MovieController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
+        if ($request->search) {
+            return Movie::whereRaw('lower(title) like (?)',["%{$request->search}%"])->paginate(10);
+        }
+
         return Movie::paginate(10);
     }
 

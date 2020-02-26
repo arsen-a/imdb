@@ -9,6 +9,6 @@ class MovieTableSeeder extends Seeder
 {
     public function run()
     {
-        factory(Movie::class, 15)->create();
+        factory(Movie::class, 50)->create();
     }
 }
