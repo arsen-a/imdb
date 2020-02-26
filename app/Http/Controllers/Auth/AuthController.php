@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Auth;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\LoginRequest;
-use Illuminate\Support\Facades\DB;
+use App\User;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
@@ -38,7 +38,7 @@ class AuthController extends Controller
             return response()->json(['error' => 'Could not create token.'], 500);
         }
 
-        $user = DB::table('users')->where('email', $request->email)->first();
+        $user = User::where('email', $request->email)->first();
 
         return response()->json(['token' => $token, 'user_id' => $user->id]);
     }
