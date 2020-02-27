@@ -15,10 +15,12 @@ class DatabaseSeeder extends Seeder
         $this->call(MovieTableSeeder::class);
         $this->call(GenreTableSeeder::class);
 
-        foreach (App\Movie::all() as $movie) {
-            $genre = App\Genre::find(rand(1, 10));
-            $movie->genre()->attach($genre->id);
-            $movie->save();
+        for ($i = 0; $i < 2; $i++) {
+            foreach (App\Movie::all() as $movie) {
+                $genre = App\Genre::find(rand(1, 10));
+                $movie->genre()->attach($genre->id);
+                $movie->save();
+            }
         }
     }
 }
