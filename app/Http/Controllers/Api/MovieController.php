@@ -32,14 +32,18 @@ class MovieController extends Controller
         // Only querying for movies with genres selected by client
         if ($request->genre && !$request->search) {
             $genres = explode(',', $request->genre);
-            return Movie::with('genres')->whereHas('genres', function ($q) use ($genres) {
-                $q->whereIn('genres.id', $genres);
-            })->paginate(10);
+            
+            return Movie::with('genres')
+                ->whereHas('genres', function ($q) use ($genres) {
+                    $q->whereIn('genres.id', $genres);
+                })
+                ->paginate(10);
         }
 
         // Querying for movies with both genre selected and search term
         if ($request->genre && $request->search) {
             $genres = explode(',', $request->genre);
+            
             return Movie::with('genres')
                 ->whereHas('genres', function ($q) use ($genres) {
                     $q->whereIn('genres.id', $genres);
