@@ -19,27 +19,33 @@ class MovieController extends Controller
      * Display a listing of the resource.
      *
      * @return \App\Movie model
+     * @param \Illuminate\Http\Request $request
      */
     public function index(Request $request)
     {
-
-        // default query $query = Movie::all(); Genres::whereIn('name', [])->with(movies);
-
-
-
-
-        // genres with movies
-
+        // Only querying for movies with search term
         if ($request->search && !$request->genre) {
-            // $query apply search
+            // 
             return Movie::whereRaw('lower(title) like (?)', ["%{$request->search}%"])->paginate(10);
         }
 
+        // Only querying for movies with genres selected by client
         if ($request->genre && !$request->search) {
             $genres = explode(',', $request->genre);
             return Movie::with('genres')->whereHas('genres', function ($q) use ($genres) {
                 $q->whereIn('genres.id', $genres);
             })->paginate(10);
+        }
+
+        // Querying for movies with both genre selected and search term
+        if ($request->genre && $request->search) {
+            $genres = explode(',', $request->genre);
+            return Movie::with('genres')
+                ->whereHas('genres', function ($q) use ($genres) {
+                    $q->whereIn('genres.id', $genres);
+                })
+                ->whereRaw('lower(title) like (?)', ["%{$request->search}%"])
+                ->paginate(10);
         }
 
         return Movie::with('genres')->paginate(10);
