@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Genre;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Movie;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class MovieController extends Controller
 {
@@ -12,19 +14,35 @@ class MovieController extends Controller
     {
         $this->middleware('auth');
     }
-    
+
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * @return \App\Movie model
      */
     public function index(Request $request)
     {
-        if ($request->search) {
-            return Movie::whereRaw('lower(title) like (?)',["%{$request->search}%"])->paginate(10);
+
+        // default query $query = Movie::all(); Genres::whereIn('name', [])->with(movies);
+
+
+
+
+        // genres with movies
+
+        if ($request->search && !$request->genre) {
+            // $query apply search
+            return Movie::whereRaw('lower(title) like (?)', ["%{$request->search}%"])->paginate(10);
         }
 
-        return Movie::paginate(10);
+        if ($request->genre && !$request->search) {
+            $genres = explode(',', $request->genre);
+            return Movie::with('genres')->whereHas('genres', function ($q) use ($genres) {
+                $q->whereIn('genres.id', $genres);
+            })->paginate(10);
+        }
+
+        return Movie::with('genres')->paginate(10);
     }
 
     /**
@@ -46,7 +64,7 @@ class MovieController extends Controller
      */
     public function show($id)
     {
-        return Movie::where('id', $id)->with('genre')->first();
+        return Movie::where('id', $id)->with('genres')->first();
     }
 
     /**

@@ -9,7 +9,7 @@ class Genre extends Model
 {
     public $timestamps = false;
 
-    public function movie()
+    public function movies()
     {
         return $this->belongsToMany(Movie::class);
     }
