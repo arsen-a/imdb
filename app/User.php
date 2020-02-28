@@ -6,6 +6,8 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+use App\MovieReaction;
+
 
 class User extends Authenticatable implements JWTSubject
 {
@@ -47,5 +49,10 @@ class User extends Authenticatable implements JWTSubject
     public function getJWTCustomClaims()
     {
         return [];
+    }
+
+    public function reactions()
+    {
+        return $this->hasMany(MovieReaction::class);
     }
 }

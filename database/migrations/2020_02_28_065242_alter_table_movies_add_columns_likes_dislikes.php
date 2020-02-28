@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class AddLikeDislikeColumnsToMoviesTable extends Migration
+class AlterTableMoviesAddColumnsLikesDislikes extends Migration
 {
     /**
      * Run the migrations.
@@ -27,8 +27,8 @@ class AddLikeDislikeColumnsToMoviesTable extends Migration
     public function down()
     {
         Schema::table('movies', function (Blueprint $table) {
-            $table->dropColumn('likes');
-            $table->dropColumn('dislikes');
+            $table->dropIfExists('likes');
+            $table->dropIfExists('dislikes');
         });
     }
 }
