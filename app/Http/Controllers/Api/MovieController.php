@@ -141,9 +141,10 @@ class MovieController extends Controller
      */
     public function show($id)
     {
-        $movie = Movie::with('comments')->where('id', $id)->with('genres')->first();
+        $movie = Movie::where('id', $id)->with('genres')->first();
         $movie->visit_count += 1;
         $movie->save();
+        $movie->setRelation('comments', $movie->comments()->paginate(2));
         return $movie;
     }
 
