@@ -7,6 +7,7 @@ use Illuminate\Notifications\Notifiable;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use App\MovieReaction;
+use App\Movie;
 
 
 class User extends Authenticatable implements JWTSubject
@@ -54,5 +55,10 @@ class User extends Authenticatable implements JWTSubject
     public function reactions()
     {
         return $this->hasMany(MovieReaction::class);
+    }
+
+    public function moviesWatched()
+    {
+        return $this->belongsToMany(Movie::class, 'movie_user', 'user_id', 'movie_id');
     }
 }
