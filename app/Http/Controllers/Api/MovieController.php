@@ -23,6 +23,11 @@ class MovieController extends Controller
      */
     public function index(Request $request)
     {
+        // Query for popular movies
+        if ($request->popular == true) {
+            return Movie::orderBy('likes', 'desc')->take(10)->get();
+        }
+
         // Only querying for movies with search term
         if ($request->search && !$request->genre) {
             return Movie::with('reactions')
