@@ -7,7 +7,7 @@ use App\Genre;
 
 class Movie extends Model
 {
-    public function genre()
+    public function genres()
     {
         return $this->belongsToMany(Genre::class);
     }
