@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Genre;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Movie;
+use App\User;
 use App\MovieReaction;
 
 class MovieController extends Controller
@@ -25,10 +25,8 @@ class MovieController extends Controller
     {
         // Only querying for movies with search term
         if ($request->search && !$request->genre) {
-            // 
             return Movie::with('reactions')
                 ->whereRaw('lower(title) like (?)', ["%{$request->search}%"])
-                // ->where('likes_dislikes.user_id', Auth::user()->id)
                 ->paginate(10);
         }
 
@@ -55,6 +53,7 @@ class MovieController extends Controller
                 ->paginate(10);
         }
 
+        // Default movie list for index 
         return Movie::with('genres', 'reactions')
             ->paginate(10);
     }
@@ -67,13 +66,16 @@ class MovieController extends Controller
      */
     public function handleReaction(Request $request)
     {
+        // collect necessary user id and movie id for insertion 
         $uid = auth()->user()->id;
         $mid = $request->movie_id;
         $movie = Movie::find($mid);
+        //get the reaction for specific user and movie
         $reaction = MovieReaction::where('movie_id', $mid)
             ->where('user_id', $uid)
             ->first();
 
+        // handle incoming reaction
         if ($request->reaction == 'like') {
             if (!$reaction) {
                 $nr = new MovieReaction;
@@ -92,7 +94,7 @@ class MovieController extends Controller
             }
 
             $reaction->liked = 1;
-            $movie->likes = $movie->likes + 1;
+            $movie->likes += 1;
             $reaction->save();
             $movie->save();
             return response()->json(['message' => 'Movie ' . $movie->title . ' liked.'],  200);
@@ -115,11 +117,32 @@ class MovieController extends Controller
             }
 
             $reaction->disliked = 1;
-            $movie->dislikes = $movie->dislikes + 1;
+            $movie->dislikes += 1;
             $reaction->save();
             $movie->save();
             return response()->json(['message' => 'Movie ' . $movie->title . ' disliked.'],  200);
         }
+    }
+
+    /**
+     * Handle incoming watch mark. Store new or update existing one
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function handleWatchMark(Request $request)
+    {
+        $mid = $request->movie_id;
+        $user = User::with('moviesWatched')->find(auth()->user()->id);
+        $hasWatched = $user->moviesWatched->contains($mid);
+
+        if ($hasWatched) {
+            $user->moviesWatched()->detach($mid);
+            return response()->json(['message' => 'Deleted from watchlist.', 'watched' => false], 200);
+        }
+
+        $user->moviesWatched()->attach($mid);
+        return response()->json(['message' => 'Added to watchlist.', 'watched' => true], 200);
     }
 
     /**
@@ -145,7 +168,12 @@ class MovieController extends Controller
         $movie->visit_count += 1;
         $movie->save();
         $movie->setRelation('comments', $movie->comments()->paginate(2));
-        return $movie;
+
+        if ($movie->usersWhoWatched()->where('user_id', auth()->user()->id)->exists()) {
+            return response()->json(['movie' => $movie, 'watched' => true], 200);
+        }
+
+        return response()->json(['movie' => $movie, 'watched' => false], 200);
     }
 
     /**
