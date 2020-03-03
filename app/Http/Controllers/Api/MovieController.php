@@ -182,6 +182,24 @@ class MovieController extends Controller
     }
 
     /**
+     * Display the specified resource.
+     *
+     * @param  string  $genre
+     * @return \Illuminate\Http\Movie
+     */
+    public function relatedMovies(Request $request)
+    {
+        $genres = $request->genres;
+
+        return Movie::with('genres')
+            ->whereHas('genres', function ($q) use ($genres) {
+                $q->whereIn('genres.name', $genres);
+            })
+            ->take(10)
+            ->get();
+    }
+
+    /**
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
