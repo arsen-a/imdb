@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\MovieRequest;
 use App\Movie;
 use App\User;
 use App\MovieReaction;
+use Illuminate\Support\Facades\DB;
 
 class MovieController extends Controller
 {
@@ -156,9 +158,17 @@ class MovieController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(MovieRequest $request)
     {
-        //
+        $movData = $request->only('title', 'description', 'image_url');
+        $genData = $request->genres;
+        $movie = Movie::create($movData);
+
+        foreach ($genData as $genreId) {
+            DB::insert('insert into genre_movie (genre_id, movie_id) values (?, ?)', [$genreId, $movie->id]);
+        }
+
+        return response()->json(['message' => 'Movie ' . $movie->title . ' added successfully.'], 200);
     }
 
     /**
