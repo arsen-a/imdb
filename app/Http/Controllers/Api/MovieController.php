@@ -6,7 +6,7 @@ use App\Genre;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Movie;
-use Illuminate\Pagination\LengthAwarePaginator;
+use App\MovieReaction;
 
 class MovieController extends Controller
 {
@@ -26,21 +26,28 @@ class MovieController extends Controller
         // Only querying for movies with search term
         if ($request->search && !$request->genre) {
             // 
-            return Movie::whereRaw('lower(title) like (?)', ["%{$request->search}%"])->paginate(10);
+            return Movie::with('reactions')
+                ->whereRaw('lower(title) like (?)', ["%{$request->search}%"])
+                // ->where('likes_dislikes.user_id', Auth::user()->id)
+                ->paginate(10);
         }
 
         // Only querying for movies with genres selected by client
         if ($request->genre && !$request->search) {
             $genres = explode(',', $request->genre);
-            return Movie::with('genres')->whereHas('genres', function ($q) use ($genres) {
-                $q->whereIn('genres.id', $genres);
-            })->paginate(10);
+
+            return Movie::with('genres', 'reactions')
+                ->whereHas('genres', function ($q) use ($genres) {
+                    $q->whereIn('genres.id', $genres);
+                })
+                ->paginate(10);
         }
 
         // Querying for movies with both genre selected and search term
         if ($request->genre && $request->search) {
             $genres = explode(',', $request->genre);
-            return Movie::with('genres')
+
+            return Movie::with('genres', 'reactions')
                 ->whereHas('genres', function ($q) use ($genres) {
                     $q->whereIn('genres.id', $genres);
                 })
@@ -48,7 +55,71 @@ class MovieController extends Controller
                 ->paginate(10);
         }
 
-        return Movie::with('genres')->paginate(10);
+        return Movie::with('genres', 'reactions')
+            ->paginate(10);
+    }
+
+    /**
+     * Handle incoming movie reaction. Store new or update existing one
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function handleReaction(Request $request)
+    {
+        $uid = auth()->user()->id;
+        $mid = $request->movie_id;
+        $movie = Movie::find($mid);
+        $reaction = MovieReaction::where('movie_id', $mid)
+            ->where('user_id', $uid)
+            ->first();
+
+        if ($request->reaction == 'like') {
+            if (!$reaction) {
+                $nr = new MovieReaction;
+                $nr->movie_id = $mid;
+                $nr->user_id = $uid;
+                $nr->liked = 1;
+                $nr->save();
+
+                $movie->likes = $movie->likes + 1;
+                $movie->save();
+                return response()->json(['message' => 'Movie ' . $movie->title . ' liked.'],  200);
+            }
+
+            if ($reaction->liked) {
+                return response()->json(['message' => 'Movie ' . $movie->title . ' already liked.'],  200);
+            }
+
+            $reaction->liked = 1;
+            $movie->likes = $movie->likes + 1;
+            $reaction->save();
+            $movie->save();
+            return response()->json(['message' => 'Movie ' . $movie->title . ' liked.'],  200);
+        }
+        if ($request->reaction == 'dislike') {
+            if (!$reaction) {
+                $nr = new MovieReaction;
+                $nr->movie_id = $mid;
+                $nr->user_id = $uid;
+                $nr->liked = 1;
+                $nr->save();
+
+                $movie->dislikes = $movie->dislikes + 1;
+                $movie->save();
+                return response()->json(['message' => 'Movie ' . $movie->title . ' disliked.'],  200);
+            }
+
+            if ($reaction->disliked) {
+                return response()->json(['message' => 'Movie ' . $movie->title . ' already disliked.'],  200);
+            }
+
+            $reaction->disliked = 1;
+            $movie->dislikes = $movie->dislikes + 1;
+            $reaction->save();
+            $movie->save();
+            return response()->json(['message' => 'Movie ' . $movie->title . ' disliked.'],  200);
+        }
     }
 
     /**

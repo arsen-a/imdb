@@ -26,3 +26,4 @@ Route::group([
 
 Route::apiResource('movies', 'Api\MovieController');
 Route::get('genres', 'Api\GenreController@index');
+Route::post('movies/reactions', 'Api\MovieController@handleReaction');
