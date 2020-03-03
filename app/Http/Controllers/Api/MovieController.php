@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Api;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\MovieRequest;
+use App\Mail\NewMovieMail;
 use App\Movie;
 use App\User;
 use App\MovieReaction;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 class MovieController extends Controller
 {
@@ -167,6 +169,8 @@ class MovieController extends Controller
         foreach ($genData as $genreId) {
             DB::insert('insert into genre_movie (genre_id, movie_id) values (?, ?)', [$genreId, $movie->id]);
         }
+
+        Mail::to('arsen@imdbproj.com')->send(new NewMovieMail($movie));
 
         return response()->json(['message' => 'Movie ' . $movie->title . ' added successfully.'], 200);
     }
