@@ -27,13 +27,21 @@ class MovieController extends Controller
      */
     public function index(Request $request)
     {
+        // elasticsearch query for movies
+        if (isset($request->elastic) && $request->elastic === 'on') { 
+            $movies = Movie::searchByQuery(['match' => ['title' => $request->search]]);
+            info('upao sam');
+            return response()->json(['movies' => $movies, 'elastic' => true], 200);
+        }
+
         // Query for popular movies
         if ($request->popular == true) {
             return Movie::orderBy('likes', 'desc')->take(10)->get();
         }
 
+
         // Only querying for movies with search term
-        if ($request->search && !$request->genre) {
+        if ($request->search && $request->elastic === true && !$request->genre) {
             return Movie::with('reactions')
                 ->whereRaw('lower(title) like (?)', ["%{$request->search}%"])
                 ->paginate(10);
@@ -165,6 +173,7 @@ class MovieController extends Controller
         $movData = $request->only('title', 'description', 'image_url');
         $genData = $request->genres;
         $movie = Movie::create($movData);
+        Movie::with('genres', 'reactions', 'comments')->find($movie->id)->addToIndex();
 
         foreach ($genData as $genreId) {
             DB::insert('insert into genre_movie (genre_id, movie_id) values (?, ?)', [$genreId, $movie->id]);
