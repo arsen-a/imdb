@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Events\NewMovieAdded;
+use App\Genre;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\MovieRequest;
@@ -170,8 +171,8 @@ class MovieController extends Controller
         }
 
         event(new NewMovieAdded($movie));
-        
-        return response()->json(['message' => 'Movie ' . $movie->title . ' added successfully.'], 200);
+
+        return response()->json(['message' => 'Movie ' . $movie->title . ' added successfully.', 'movie' => $movie], 200);
     }
 
     /**
