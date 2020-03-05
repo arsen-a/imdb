@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\NewMovieAdded;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\MovieRequest;
@@ -168,6 +169,8 @@ class MovieController extends Controller
             DB::insert('insert into genre_movie (genre_id, movie_id) values (?, ?)', [$genreId, $movie->id]);
         }
 
+        event(new NewMovieAdded($movie));
+        
         return response()->json(['message' => 'Movie ' . $movie->title . ' added successfully.'], 200);
     }
 
