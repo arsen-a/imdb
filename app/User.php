@@ -8,11 +8,13 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use App\MovieReaction;
 use App\Movie;
+use Elasticquent\ElasticquentTrait;
 
 
 class User extends Authenticatable implements JWTSubject
 {
     use Notifiable;
+    use ElasticquentTrait;
 
     /**
      * The attributes that are mass assignable.
