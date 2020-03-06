@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Events\MovieDisliked;
+use App\Events\MovieLiked;
 use App\Events\NewMovieAdded;
 use App\Genre;
 use Illuminate\Http\Request;
@@ -28,7 +30,7 @@ class MovieController extends Controller
     public function index(Request $request)
     {
         // elasticsearch query for movies
-        if (isset($request->elastic) && $request->elastic === 'on') { 
+        if (isset($request->elastic) && $request->elastic === 'on') {
             $movies = Movie::searchByQuery(['match' => ['title' => $request->search]]);
             info('upao sam');
             return response()->json(['movies' => $movies, 'elastic' => true], 200);
@@ -103,6 +105,7 @@ class MovieController extends Controller
 
                 $movie->likes = $movie->likes + 1;
                 $movie->save();
+                broadcast(new MovieLiked($movie));
                 return response()->json(['message' => 'Movie ' . $movie->title . ' liked.'],  200);
             }
 
@@ -114,6 +117,7 @@ class MovieController extends Controller
             $movie->likes += 1;
             $reaction->save();
             $movie->save();
+            broadcast(new MovieLiked($movie));
             return response()->json(['message' => 'Movie ' . $movie->title . ' liked.'],  200);
         }
         if ($request->reaction == 'dislike') {
@@ -126,6 +130,7 @@ class MovieController extends Controller
 
                 $movie->dislikes = $movie->dislikes + 1;
                 $movie->save();
+                broadcast(new MovieDisliked($movie));
                 return response()->json(['message' => 'Movie ' . $movie->title . ' disliked.'],  200);
             }
 
@@ -137,6 +142,7 @@ class MovieController extends Controller
             $movie->dislikes += 1;
             $reaction->save();
             $movie->save();
+            broadcast(new MovieDisliked($movie));
             return response()->json(['message' => 'Movie ' . $movie->title . ' disliked.'],  200);
         }
     }
@@ -195,7 +201,7 @@ class MovieController extends Controller
         $movie = Movie::where('id', $id)->with('genres')->first();
         $movie->visit_count += 1;
         $movie->save();
-        $movie->setRelation('comments', $movie->comments()->paginate(2));
+        $movie->setRelation('comments', $movie->comments()->orderBy('created_at', 'desc')->paginate(5));
 
         if ($movie->usersWhoWatched()->where('user_id', auth()->user()->id)->exists()) {
             return response()->json(['movie' => $movie, 'watched' => true], 200);

@@ -11,6 +11,12 @@
 |
 */
 
-Broadcast::channel('App.User.{id}', function ($user, $id) {
-    return (int) $user->id === (int) $id;
+Broadcast::channel('comment', function ($user) {
+    return true;
+});
+Broadcast::channel('likes', function  ($user) {
+    return true;
+});
+Broadcast::channel('dislikes', function  ($user) {
+    return true;
 });
