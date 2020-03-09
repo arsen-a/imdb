@@ -30,4 +30,10 @@ class SendNewMovieEmail implements ShouldQueue
     {
         Mail::to('arsen@imdbproj.com')->send(new NewMovieMail($event->movie));
     }
+
+    public function failed(Exception $exception)
+    {
+        // usually would send new notification to admin/user
+        info($exception);
+    }
 }
