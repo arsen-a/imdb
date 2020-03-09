@@ -9,6 +9,7 @@ use App\Genre;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\MovieRequest;
+use App\Image;
 use App\Movie;
 use App\User;
 use App\MovieReaction;
@@ -44,7 +45,7 @@ class MovieController extends Controller
 
         // Only querying for movies with search term
         if ($request->search && $request->elastic === true && !$request->genre) {
-            return Movie::with('reactions')
+            return Movie::with('reactions', 'image')
                 ->whereRaw('lower(title) like (?)', ["%{$request->search}%"])
                 ->paginate(10);
         }
@@ -53,7 +54,7 @@ class MovieController extends Controller
         if ($request->genre && !$request->search) {
             $genres = explode(',', $request->genre);
 
-            return Movie::with('genres', 'reactions')
+            return Movie::with('genres', 'reactions', 'image')
                 ->whereHas('genres', function ($q) use ($genres) {
                     $q->whereIn('genres.id', $genres);
                 })
@@ -64,7 +65,7 @@ class MovieController extends Controller
         if ($request->genre && $request->search) {
             $genres = explode(',', $request->genre);
 
-            return Movie::with('genres', 'reactions')
+            return Movie::with('genres', 'reactions', 'image')
                 ->whereHas('genres', function ($q) use ($genres) {
                     $q->whereIn('genres.id', $genres);
                 })
@@ -73,7 +74,7 @@ class MovieController extends Controller
         }
 
         // Default movie list for index 
-        return Movie::with('genres', 'reactions')
+        return Movie::with('genres', 'reactions', 'image')
             ->paginate(10);
     }
 
@@ -176,12 +177,34 @@ class MovieController extends Controller
      */
     public function store(MovieRequest $request)
     {
-        $movData = $request->only('title', 'description', 'image_url');
-        $genData = $request->genres;
-        $movie = Movie::create($movData);
-        Movie::with('genres', 'reactions', 'comments')->find($movie->id)->addToIndex();
+        $imgName = implode('-', explode(' ', $request->title));
+        \Image::make($request->image)
+            ->resize(200, 200)
+            ->save('images/movies/thumbnails/' . $imgName . '.jpg');
+        \Image::make($request->image)
+            ->resize(400, 400)
+            ->save('images/movies/full_size/' . $imgName . '.jpg');
+
+        $movData = $request->only('title', 'description');
+        $genData = explode(',', $request->genres);
+
+        $movie = new Movie;
+        $movie->title = $movData['title'];
+        $movie->description = $movData['description'];
+        $movie->save();
+
+        $img = new Image;
+        $img->movie_id = $movie->id;
+        $img->thumbnail = 'images/movies/thumbnails/' . $imgName . '.jpg';
+        $img->full_size = 'images/movies/full_size/' . $imgName . '.jpg';
+        $img->save();
+        $movie->image = $img->id;
+        $movie->save();
+
+        Movie::with('genres', 'reactions', 'comments', 'image')->find($movie->id)->addToIndex();
 
         foreach ($genData as $genreId) {
+            info($genreId);
             DB::insert('insert into genre_movie (genre_id, movie_id) values (?, ?)', [$genreId, $movie->id]);
         }
 
@@ -198,7 +221,7 @@ class MovieController extends Controller
      */
     public function show($id)
     {
-        $movie = Movie::where('id', $id)->with('genres')->first();
+        $movie = Movie::where('id', $id)->with('genres', 'image')->first();
         $movie->visit_count += 1;
         $movie->save();
         $movie->setRelation('comments', $movie->comments()->orderBy('created_at', 'desc')->paginate(5));
