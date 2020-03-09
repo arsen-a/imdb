@@ -8,13 +8,18 @@ use App\MovieReaction;
 use App\Comment;
 use App\User;
 use Elasticquent\ElasticquentTrait;
+use App\Image;
 
 class Movie extends Model
 {
     use ElasticquentTrait;
 
-    protected $guarded = [
-        'id'
+    protected $fillable = [
+        'movie_id', 
+        'full_size',
+        'thumbnail',
+        'created_at',
+        'updated_at'
     ];
 
     public function genres()
@@ -37,31 +42,8 @@ class Movie extends Model
         return $this->belongsToMany(User::class, 'movie_user', 'movie_id', 'user_id');
     }
 
-    // protected $mappingProperties = array(
-    //     'title' => [
-    //         'type' => 'string',
-    //         "analyzer" => "standard",
-    //     ],
-    //     'description' => [
-    //         'type' => 'string',
-    //         "analyzer" => "standard",
-    //     ],
-    //     'image_url' => [
-    //         'type' => 'string',
-    //         "analyzer" => "standard",
-    //     ],
-    //     'likes' => [
-    //         'type' => 'long',
-    //         "analyzer" => "standard",
-    //     ],
-    //     'dislikes' => [
-    //         'type' => 'long',
-    //         "analyzer" => "standard",
-    //     ],
-    //     'visit_count' => [
-    //         'type' => 'long',
-    //         "analyzer" => "standard",
-    //     ]
-    // );
-
+    public function image()
+    {
+        return $this->hasOne(Image::class);
+    }
 }
