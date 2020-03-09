@@ -111,7 +111,7 @@ class MovieController extends Controller
             }
 
             if ($reaction->liked) {
-                return response()->json(['message' => 'Movie ' . $movie->title . ' already liked.'],  200);
+                return response()->json(['message' => 'Movie ' . $movie->title . ' already liked.'],  202);
             }
 
             $reaction->liked = 1;
@@ -136,7 +136,7 @@ class MovieController extends Controller
             }
 
             if ($reaction->disliked) {
-                return response()->json(['message' => 'Movie ' . $movie->title . ' already disliked.'],  200);
+                return response()->json(['message' => 'Movie ' . $movie->title . ' already disliked.'],  202);
             }
 
             $reaction->disliked = 1;
